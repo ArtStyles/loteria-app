@@ -30,7 +30,7 @@ function App() {
     try {
       await withMinimumDelay((async () => {
         const drawingsResponse = await fetch('/api/drawings');
-        const drawingsPayload = await drawingsResponse.json();
+        const drawingsPayload = await readJsonResponse(drawingsResponse);
         if (!drawingsPayload.ok) {
           throw new Error(drawingsPayload.error);
         }
@@ -41,7 +41,7 @@ function App() {
         const latest = nextDrawings.at(-1);
         const numbers = sourceNumbers || (latest ? [latest.fijo, latest.first, latest.second] : ['00', '01', '02']);
         const analysisResponse = await fetch(`/api/analysis?numbers=${numbers.join(',')}`);
-        const analysisPayload = await analysisResponse.json();
+        const analysisPayload = await readJsonResponse(analysisResponse);
         if (analysisPayload.ok) {
           setAnalysis(analysisPayload.data);
         }
@@ -65,7 +65,7 @@ function App() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     });
-    const payload = await response.json();
+    const payload = await readJsonResponse(response);
 
     if (!payload.ok) {
       setError(payload.error);
@@ -102,7 +102,7 @@ function App() {
           method: 'POST',
           body: formData,
         });
-        const payload = await response.json();
+        const payload = await readJsonResponse(response);
         if (!payload.ok) {
           throw new Error(payload.error);
         }
@@ -274,6 +274,16 @@ function NumberInput({ label, value, onChange }) {
       />
     </label>
   );
+}
+
+async function readJsonResponse(response) {
+  const text = await response.text();
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error('La API no devolvio JSON. Revisa que las rutas /api esten desplegadas.');
+  }
 }
 
 function MethodPanel({ title, items }) {
