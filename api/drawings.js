@@ -1,5 +1,4 @@
-import path from 'node:path';
-import { readDrawingsFromWorkbook } from '../server/workbookNode.js';
+import { readActiveDrawings } from '../server/activeWorkbook.js';
 
 export default async function handler(request, response) {
   if (request.method !== 'GET') {
@@ -7,8 +6,7 @@ export default async function handler(request, response) {
   }
 
   try {
-    const workbookPath = path.join(process.cwd(), 'METODOS 3.xlsx');
-    const drawings = await readDrawingsFromWorkbook(workbookPath);
+    const drawings = await readActiveDrawings();
     return response.status(200).json({ ok: true, data: drawings });
   } catch (error) {
     return response.status(500).json({ ok: false, error: error.message });

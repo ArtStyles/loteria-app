@@ -110,6 +110,14 @@ function readTextBody(request) {
 
 async function readWorkbookUpload(request) {
   const contentType = request.headers['content-type'] || '';
+  if (contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
+    const fileBuffer = await readBinaryBody(request);
+    await mkdir(uploadsDir, { recursive: true });
+    const uploadPath = path.join(uploadsDir, `uploaded-${Date.now()}.xlsx`);
+    await writeFile(uploadPath, fileBuffer);
+    return { path: uploadPath };
+  }
+
   const boundaryMatch = contentType.match(/boundary=(.+)$/);
   if (!boundaryMatch) {
     throw new Error('La carga debe enviarse como formulario multipart.');

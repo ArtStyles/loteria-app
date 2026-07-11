@@ -1,6 +1,5 @@
-import path from 'node:path';
 import { analyzeMethods, rankNumbers } from '../src/lib/loteria.js';
-import { readDrawingsFromWorkbook } from '../server/workbookNode.js';
+import { readActiveDrawings } from '../server/activeWorkbook.js';
 
 export default async function handler(request, response) {
   if (request.method !== 'GET') {
@@ -8,8 +7,7 @@ export default async function handler(request, response) {
   }
 
   try {
-    const workbookPath = path.join(process.cwd(), 'METODOS 3.xlsx');
-    const drawings = await readDrawingsFromWorkbook(workbookPath);
+    const drawings = await readActiveDrawings();
     const requested = String(request.query.numbers || '').split(',').filter(Boolean);
     const latest = drawings.at(-1);
     const sourceNumbers = requested.length === 3

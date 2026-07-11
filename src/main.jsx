@@ -95,12 +95,13 @@ function App() {
 
     try {
       await withMinimumDelay((async () => {
-        const formData = new FormData();
-        formData.append('workbook', workbookFile);
-
         const response = await fetch('/api/workbook', {
           method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'X-File-Name': workbookFile.name,
+          },
+          body: workbookFile,
         });
         const payload = await readJsonResponse(response);
         if (!payload.ok) {

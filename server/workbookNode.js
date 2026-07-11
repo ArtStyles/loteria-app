@@ -5,6 +5,16 @@ const SHEET_NAME = 'BASE DATOS FLORIDA';
 export async function readDrawingsFromWorkbook(workbookPath) {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(workbookPath);
+  return readDrawingsFromLoadedWorkbook(workbook);
+}
+
+export async function readDrawingsFromBuffer(buffer) {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+  return readDrawingsFromLoadedWorkbook(workbook);
+}
+
+function readDrawingsFromLoadedWorkbook(workbook) {
   const worksheet = workbook.getWorksheet(SHEET_NAME);
 
   if (!worksheet) {

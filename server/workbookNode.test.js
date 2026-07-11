@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { readDrawingsFromWorkbook } from './workbookNode.js';
+import { readFile } from 'node:fs/promises';
+import { readDrawingsFromBuffer, readDrawingsFromWorkbook } from './workbookNode.js';
 
 const rootDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -18,5 +19,13 @@ describe('serverless workbook reader', () => {
       first: '66',
       second: '26',
     });
+  });
+
+  test('reads workbook data from a Blob-style buffer', async () => {
+    const buffer = await readFile(path.join(rootDir, 'METODOS 3.xlsx'));
+    const drawings = await readDrawingsFromBuffer(buffer);
+
+    assert.equal(drawings.length, 13066);
+    assert.equal(drawings[0].date, '2008-05-19');
   });
 });
