@@ -1,4 +1,4 @@
-import { head, put } from '@vercel/blob';
+import { get, put } from '@vercel/blob';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { readDrawingsFromBuffer, readDrawingsFromWorkbook } from './workbookNode.js';
@@ -13,13 +13,15 @@ export async function readActiveDrawings(rootDir = process.cwd()) {
   }
 
   try {
-    const blob = await head(ACTIVE_WORKBOOK_PATH);
-    const response = await fetch(blob.downloadUrl);
-    if (!response.ok) {
-      throw new Error(`No se pudo descargar la BD desde Blob: ${response.status}`);
+    const result = await get(ACTIVE_WORKBOOK_PATH, {
+      access: 'private',
+      useCache: false,
+    });
+    if (!result?.stream) {
+      throw new Error('No se encontro la BD activa en Blob.');
     }
 
-    const buffer = Buffer.from(await response.arrayBuffer());
+    const buffer = await streamToBuffer(result.stream);
     return readDrawingsFromBuffer(buffer);
   } catch (error) {
     if (isMissingBlob(error)) {
@@ -41,7 +43,7 @@ export async function saveActiveWorkbook(buffer) {
   }
 
   const blob = await put(ACTIVE_WORKBOOK_PATH, buffer, {
-    access: 'public',
+    access: 'private',
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -67,4 +69,13 @@ export function hasBlobCredentials() {
 function isMissingBlob(error) {
   const message = String(error?.message || error);
   return message.includes('not found') || message.includes('404') || message.includes('NoSuchBlob');
+}
+
+async function streamToBuffer(stream) {
+  const chunks = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks);
 }
