@@ -8,7 +8,7 @@ export const ACTIVE_WORKBOOK_PATH = 'database/METODOS 3.xlsx';
 export async function readActiveDrawings(rootDir = process.cwd()) {
   const localWorkbookPath = path.join(rootDir, 'METODOS 3.xlsx');
 
-  if (!hasBlobToken()) {
+  if (!hasBlobCredentials()) {
     return readDrawingsFromWorkbook(localWorkbookPath);
   }
 
@@ -31,8 +31,8 @@ export async function readActiveDrawings(rootDir = process.cwd()) {
 }
 
 export async function saveActiveWorkbook(buffer) {
-  if (!hasBlobToken()) {
-    throw new Error('BLOB_READ_WRITE_TOKEN no esta configurado.');
+  if (!hasBlobCredentials()) {
+    throw new Error('Vercel Blob no esta conectado al proyecto.');
   }
 
   const drawings = await readDrawingsFromBuffer(buffer);
@@ -60,8 +60,8 @@ export async function seedBlobFromLocalWorkbook(rootDir = process.cwd()) {
   return saveActiveWorkbook(buffer);
 }
 
-function hasBlobToken() {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+export function hasBlobCredentials() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 }
 
 function isMissingBlob(error) {
