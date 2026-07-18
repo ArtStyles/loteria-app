@@ -295,6 +295,24 @@ th {
   grid-template-columns: 1fr auto 1fr auto;
 }
 
+.match-filter {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr auto;
+  margin-bottom: 12px;
+}
+
+.empty-state {
+  background: #f8fafb;
+  border: 1px solid #e3eaee;
+  border-radius: 6px;
+  color: #52616a;
+  font-weight: 700;
+  margin: 0;
+  padding: 10px;
+}
+
 .compact {
   padding: 6px 8px;
 }
@@ -324,6 +342,10 @@ th {
   }
 
   .number-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .match-filter {
     grid-template-columns: 1fr;
   }
 }
