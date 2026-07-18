@@ -5,8 +5,10 @@ import {
   buildNormalCombinations,
   buildParlets,
   countParlet,
+  filterMatchesByCounts,
   getDrawDigits,
   normalizeNumber,
+  parseCountFilter,
   rankNumbers,
 } from './loteria.js';
 
@@ -77,5 +79,36 @@ describe('historical analysis', () => {
       { number: '85', count: 2 },
     ]);
     assert.equal(rankNumbers(drawings).never[0].count, 0);
+  });
+});
+
+describe('match count filters', () => {
+  const matches = [
+    { normal: ['94', '96'], inverse: ['49', '69'], normalCount: 7, inverseCount: 9 },
+    { normal: ['97', '99'], inverse: ['79', '99'], normalCount: 7, inverseCount: 8 },
+    { normal: ['89', '98'], inverse: ['98', '89'], normalCount: 4, inverseCount: 9 },
+  ];
+
+  test('filters matches by exact normal and inverse counts', () => {
+    assert.deepEqual(filterMatchesByCounts(matches, { normalCount: '7', inverseCount: '9' }), [
+      matches[0],
+    ]);
+  });
+
+  test('leaves a side unfiltered when its count is empty or invalid', () => {
+    assert.deepEqual(filterMatchesByCounts(matches, { normalCount: '', inverseCount: '9' }), [
+      matches[0],
+      matches[2],
+    ]);
+    assert.deepEqual(filterMatchesByCounts(matches, { normalCount: '-1', inverseCount: '' }), matches);
+  });
+
+  test('parses only whole non-negative count filters', () => {
+    assert.equal(parseCountFilter('0'), 0);
+    assert.equal(parseCountFilter('12'), 12);
+    assert.equal(parseCountFilter(''), null);
+    assert.equal(parseCountFilter('-1'), null);
+    assert.equal(parseCountFilter('3.5'), null);
+    assert.equal(parseCountFilter('abc'), null);
   });
 });

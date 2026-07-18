@@ -144,6 +144,26 @@ export function analyzeMatches(drawings, normalNumbers, inverseNumbers) {
     .sort((a, b) => (b.normalCount + b.inverseCount) - (a.normalCount + a.inverseCount));
 }
 
+export function filterMatchesByCounts(matches, filters = {}) {
+  const normalCount = parseCountFilter(filters.normalCount);
+  const inverseCount = parseCountFilter(filters.inverseCount);
+
+  return matches.filter((match) => {
+    const normalMatches = normalCount === null || match.normalCount === normalCount;
+    const inverseMatches = inverseCount === null || match.inverseCount === inverseCount;
+    return normalMatches && inverseMatches;
+  });
+}
+
+export function parseCountFilter(value) {
+  const text = String(value ?? '').trim();
+  if (!/^\d+$/.test(text)) {
+    return null;
+  }
+
+  return Number(text);
+}
+
 function drawingNumbers(drawing) {
   return [
     drawing.fijo,

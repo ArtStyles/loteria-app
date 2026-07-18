@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
+import { filterMatchesByCounts } from './lib/loteria.js';
 import { withMinimumDelay } from './lib/uiTiming.js';
 
 function App() {
@@ -10,6 +11,8 @@ function App() {
   const [status, setStatus] = useState('Cargando datos...');
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('');
+  const [matchFilters, setMatchFilters] = useState({ normalCount: '', inverseCount: '' });
+  const [appliedMatchFilters, setAppliedMatchFilters] = useState({ normalCount: '', inverseCount: '' });
   const [workbookFile, setWorkbookFile] = useState(null);
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
@@ -82,6 +85,11 @@ function App() {
     loadData([form.fijo || '0', form.first || '0', form.second || '0']);
   }
 
+  function searchMatches(event) {
+    event.preventDefault();
+    setAppliedMatchFilters(matchFilters);
+  }
+
   async function uploadWorkbook(event) {
     event.preventDefault();
     if (!workbookFile) {
@@ -127,6 +135,10 @@ function App() {
       .slice(-250)
       .reverse();
   }, [drawings, filter]);
+
+  const filteredMatches = useMemo(() => (
+    analysis ? filterMatchesByCounts(analysis.matches, appliedMatchFilters) : []
+  ), [analysis, appliedMatchFilters]);
 
   return (
     <main className="app-shell">
@@ -244,8 +256,38 @@ function App() {
             <RankingPanel rankings={analysis.rankings} />
             <section className="panel">
               <h2>Coincidencias normal / inverso</h2>
+              <form className="match-filter" onSubmit={searchMatches}>
+                <label>
+                  Normal salio
+                  <input
+                    inputMode="numeric"
+                    placeholder="7"
+                    value={matchFilters.normalCount}
+                    onChange={(event) => setMatchFilters({
+                      ...matchFilters,
+                      normalCount: event.target.value.replace(/\D/g, ''),
+                    })}
+                  />
+                </label>
+                <label>
+                  Inverso salio
+                  <input
+                    inputMode="numeric"
+                    placeholder="9"
+                    value={matchFilters.inverseCount}
+                    onChange={(event) => setMatchFilters({
+                      ...matchFilters,
+                      inverseCount: event.target.value.replace(/\D/g, ''),
+                    })}
+                  />
+                </label>
+                <button type="submit">Buscar coincidencias</button>
+              </form>
               <div className="match-list">
-                {analysis.matches.slice(0, 24).map((match) => (
+                {filteredMatches.length === 0 && (
+                  <p className="empty-state">No hay coincidencias para esos valores.</p>
+                )}
+                {filteredMatches.slice(0, 24).map((match) => (
                   <div className="match-row" key={`${match.normal.join('-')}-${match.inverse.join('-')}`}>
                     <span>{match.normal.join(' . ')}</span>
                     <strong>{match.normalCount}</strong>
