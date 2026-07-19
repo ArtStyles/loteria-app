@@ -1,15 +1,20 @@
 import { get, put } from '@vercel/blob';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { readDrawingsFromBuffer, readDrawingsFromWorkbook } from './workbookNode.js';
+import { appendDrawingToBuffer, readDrawingsFromBuffer } from './workbookNode.js';
 
 export const ACTIVE_WORKBOOK_PATH = 'database/METODOS 3.xlsx';
 
 export async function readActiveDrawings(rootDir = process.cwd()) {
+  const buffer = await readActiveWorkbookBuffer(rootDir);
+  return readDrawingsFromBuffer(buffer);
+}
+
+export async function readActiveWorkbookBuffer(rootDir = process.cwd()) {
   const localWorkbookPath = path.join(rootDir, 'METODOS 3.xlsx');
 
   if (!hasBlobCredentials()) {
-    return readDrawingsFromWorkbook(localWorkbookPath);
+    return readFile(localWorkbookPath);
   }
 
   try {
@@ -21,11 +26,10 @@ export async function readActiveDrawings(rootDir = process.cwd()) {
       throw new Error('No se encontro la BD activa en Blob.');
     }
 
-    const buffer = await streamToBuffer(result.stream);
-    return readDrawingsFromBuffer(buffer);
+    return streamToBuffer(result.stream);
   } catch (error) {
     if (isMissingBlob(error)) {
-      return readDrawingsFromWorkbook(localWorkbookPath);
+      return readFile(localWorkbookPath);
     }
 
     throw error;
@@ -56,6 +60,28 @@ export async function saveActiveWorkbook(buffer) {
   };
 }
 
+export async function appendActiveDrawing(drawing, rootDir = process.cwd()) {
+  if (!hasBlobCredentials()) {
+    throw new Error('Vercel Blob no esta conectado al proyecto.');
+  }
+
+  const currentBuffer = await readActiveWorkbookBuffer(rootDir);
+  const result = await appendDrawingToBuffer(currentBuffer, drawing);
+  const blob = await put(ACTIVE_WORKBOOK_PATH, result.buffer, {
+    access: 'private',
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+
+  return {
+    count: result.drawings.length,
+    drawing: result.drawing,
+    url: blob.url,
+    pathname: blob.pathname,
+  };
+}
+
 export async function seedBlobFromLocalWorkbook(rootDir = process.cwd()) {
   const localWorkbookPath = path.join(rootDir, 'METODOS 3.xlsx');
   const buffer = await readFile(localWorkbookPath);
@@ -68,7 +94,10 @@ export function hasBlobCredentials() {
 
 function isMissingBlob(error) {
   const message = String(error?.message || error);
-  return message.includes('not found') || message.includes('404') || message.includes('NoSuchBlob');
+  return message.includes('not found')
+    || message.includes('404')
+    || message.includes('NoSuchBlob')
+    || message.includes('No se encontro la BD activa');
 }
 
 async function streamToBuffer(stream) {
