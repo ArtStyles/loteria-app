@@ -86,7 +86,6 @@ label {
 
 h1,
 h2,
-h3,
 p {
   margin-top: 0;
 }
@@ -99,11 +98,6 @@ h1 {
 h2 {
   font-size: 18px;
   margin-bottom: 14px;
-}
-
-h3 {
-  font-size: 14px;
-  margin-bottom: 8px;
 }
 
 .status-pill,
@@ -272,13 +266,11 @@ th {
   text-align: center;
 }
 
-.parlet-list,
 .match-list {
   display: grid;
   gap: 8px;
 }
 
-.parlet-row,
 .match-row {
   align-items: center;
   background: #f8fafb;
@@ -333,20 +325,9 @@ th {
   padding: 10px;
 }
 
-.compact {
-  padding: 6px 8px;
-}
-
-.ranking-grid {
-  display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(4, 1fr);
-}
-
 @media (max-width: 980px) {
   .workspace,
-  .method-grid,
-  .ranking-grid {
+  .method-grid {
     grid-template-columns: 1fr;
   }
 

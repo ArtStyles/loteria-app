@@ -253,83 +253,75 @@ function App() {
             <MethodPanel title="Metodo inverso" items={analysis.inverse} />
           </section>
 
-          <section className="workspace">
-            <ParletPanel title="Parlets normales" rows={analysis.normalParlets.slice(0, 20)} />
-            <ParletPanel title="Parlets inversos" rows={analysis.inverseParlets.slice(0, 20)} />
-          </section>
-
-          <section className="workspace">
-            <RankingPanel rankings={analysis.rankings} />
-            <section className="panel">
-              <h2>Coincidencias normal / inverso</h2>
-              <form className="match-filter" onSubmit={searchMatches}>
-                <label>
-                  Campo 1
-                  <div className="match-field-controls">
-                    <select
-                      value={matchFilters.firstMethod}
-                      onChange={(event) => setMatchFilters({
-                        ...matchFilters,
-                        firstMethod: event.target.value,
-                      })}
-                    >
-                      <option value="normal">Normal</option>
-                      <option value="inverse">Inverso</option>
-                    </select>
-                    <input
-                      inputMode="numeric"
-                      placeholder="7"
-                      value={matchFilters.firstCount}
-                      onChange={(event) => setMatchFilters({
-                        ...matchFilters,
-                        firstCount: event.target.value.replace(/\D/g, ''),
-                      })}
-                    />
-                  </div>
-                </label>
-                <label>
-                  Campo 2
-                  <div className="match-field-controls">
-                    <select
-                      value={matchFilters.secondMethod}
-                      onChange={(event) => setMatchFilters({
-                        ...matchFilters,
-                        secondMethod: event.target.value,
-                      })}
-                    >
-                      <option value="normal">Normal</option>
-                      <option value="inverse">Inverso</option>
-                    </select>
-                    <input
-                      inputMode="numeric"
-                      placeholder="9"
-                      value={matchFilters.secondCount}
-                      onChange={(event) => setMatchFilters({
-                        ...matchFilters,
-                        secondCount: event.target.value.replace(/\D/g, ''),
-                      })}
-                    />
-                  </div>
-                </label>
-                <button type="submit">Buscar coincidencias</button>
-              </form>
-              <div className="match-list">
-                {filteredMatches.length === 0 && (
-                  <p className="empty-state">No hay coincidencias para esos valores.</p>
-                )}
-                {filteredMatches.slice(0, 24).map((match) => (
-                  <div
-                    className="match-row"
-                    key={`${match.first.method}-${match.first.left}-${match.first.right}-${match.second.method}-${match.second.left}-${match.second.right}`}
+          <section className="panel">
+            <h2>Coincidencias normal / inverso</h2>
+            <form className="match-filter" onSubmit={searchMatches}>
+              <label>
+                Campo 1
+                <div className="match-field-controls">
+                  <select
+                    value={matchFilters.firstMethod}
+                    onChange={(event) => setMatchFilters({
+                      ...matchFilters,
+                      firstMethod: event.target.value,
+                    })}
                   >
-                    <MatchParlet match={match.first} />
-                    <strong>{match.first.count}</strong>
-                    <MatchParlet match={match.second} />
-                    <strong>{match.second.count}</strong>
-                  </div>
-                ))}
-              </div>
-            </section>
+                    <option value="normal">Normal</option>
+                    <option value="inverse">Inverso</option>
+                  </select>
+                  <input
+                    inputMode="numeric"
+                    placeholder="7"
+                    value={matchFilters.firstCount}
+                    onChange={(event) => setMatchFilters({
+                      ...matchFilters,
+                      firstCount: event.target.value.replace(/\D/g, ''),
+                    })}
+                  />
+                </div>
+              </label>
+              <label>
+                Campo 2
+                <div className="match-field-controls">
+                  <select
+                    value={matchFilters.secondMethod}
+                    onChange={(event) => setMatchFilters({
+                      ...matchFilters,
+                      secondMethod: event.target.value,
+                    })}
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="inverse">Inverso</option>
+                  </select>
+                  <input
+                    inputMode="numeric"
+                    placeholder="9"
+                    value={matchFilters.secondCount}
+                    onChange={(event) => setMatchFilters({
+                      ...matchFilters,
+                      secondCount: event.target.value.replace(/\D/g, ''),
+                    })}
+                  />
+                </div>
+              </label>
+              <button type="submit">Buscar coincidencias</button>
+            </form>
+            <div className="match-list">
+              {filteredMatches.length === 0 && (
+                <p className="empty-state">No hay coincidencias para esos valores.</p>
+              )}
+              {filteredMatches.slice(0, 24).map((match) => (
+                <div
+                  className="match-row"
+                  key={`${match.first.method}-${match.first.left}-${match.first.right}-${match.second.method}-${match.second.left}-${match.second.right}`}
+                >
+                  <MatchParlet match={match.first} />
+                  <strong>{match.first.count}</strong>
+                  <MatchParlet match={match.second} />
+                  <strong>{match.second.count}</strong>
+                </div>
+              ))}
+            </div>
           </section>
         </>
       )}
@@ -381,50 +373,6 @@ function MethodPanel({ title, items }) {
       <h2>{title}</h2>
       <div className="chips">
         {items.map((item) => <span className="chip" key={item}>{item}</span>)}
-      </div>
-    </section>
-  );
-}
-
-function ParletPanel({ title, rows }) {
-  return (
-    <section className="panel">
-      <h2>{title}</h2>
-      <div className="parlet-list">
-        {rows.map((row) => (
-          <div className="parlet-row" key={`${row.left}-${row.right}`}>
-            <span>{row.left} . {row.right}</span>
-            <strong>{row.count}</strong>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function RankingPanel({ rankings }) {
-  const groups = [
-    ['Calientes', rankings.hot],
-    ['Frios', rankings.cold],
-    ['Salidores', rankings.frequent],
-    ['No han salido', rankings.never],
-  ];
-
-  return (
-    <section className="panel">
-      <h2>Rankings</h2>
-      <div className="ranking-grid">
-        {groups.map(([title, rows]) => (
-          <div key={title}>
-            <h3>{title}</h3>
-            {rows.map((row) => (
-              <div className="parlet-row compact" key={`${title}-${row.number}`}>
-                <span>{row.number}</span>
-                <strong>{row.count}</strong>
-              </div>
-            ))}
-          </div>
-        ))}
       </div>
     </section>
   );
