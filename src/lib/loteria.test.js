@@ -6,7 +6,9 @@ import {
   buildParlets,
   countParlet,
   filterMatchesByCounts,
+  findMethodDigitCoincidences,
   getDrawDigits,
+  getParletDigitSignature,
   normalizeNumber,
   parseCountFilter,
   rankNumbers,
@@ -110,5 +112,86 @@ describe('match count filters', () => {
     assert.equal(parseCountFilter('-1'), null);
     assert.equal(parseCountFilter('3.5'), null);
     assert.equal(parseCountFilter('abc'), null);
+  });
+});
+
+describe('configurable method digit coincidences', () => {
+  const analysis = {
+    normalParlets: [
+      { left: '97', right: '81', count: 7 },
+      { left: '92', right: '31', count: 7 },
+      { left: '11', right: '79', count: 7 },
+      { left: '79', right: '18', count: 9 },
+      { left: '17', right: '19', count: 9 },
+      { left: '90', right: '46', count: 5 },
+    ],
+    inverseParlets: [
+      { left: '79', right: '18', count: 9 },
+      { left: '29', right: '13', count: 9 },
+      { left: '09', right: '64', count: 9 },
+      { left: '11', right: '79', count: 4 },
+    ],
+  };
+
+  test('builds digit signatures regardless of order while preserving duplicates', () => {
+    assert.equal(getParletDigitSignature({ left: '97', right: '81' }), '1789');
+    assert.equal(getParletDigitSignature({ left: '79', right: '18' }), '1789');
+    assert.equal(getParletDigitSignature({ left: '11', right: '79' }), '1179');
+    assert.equal(getParletDigitSignature({ left: '17', right: '19' }), '1179');
+  });
+
+  test('finds coincidences between different selected methods and counts', () => {
+    assert.deepEqual(findMethodDigitCoincidences(analysis, {
+      firstMethod: 'normal',
+      firstCount: '7',
+      secondMethod: 'inverse',
+      secondCount: '9',
+    }), [
+      {
+        first: { method: 'normal', left: '97', right: '81', count: 7 },
+        second: { method: 'inverse', left: '79', right: '18', count: 9 },
+        signature: '1789',
+      },
+      {
+        first: { method: 'normal', left: '92', right: '31', count: 7 },
+        second: { method: 'inverse', left: '29', right: '13', count: 9 },
+        signature: '1239',
+      },
+    ]);
+  });
+
+  test('finds coincidences when both fields use the same method', () => {
+    assert.deepEqual(findMethodDigitCoincidences(analysis, {
+      firstMethod: 'normal',
+      firstCount: '7',
+      secondMethod: 'normal',
+      secondCount: '9',
+    }), [
+      {
+        first: { method: 'normal', left: '97', right: '81', count: 7 },
+        second: { method: 'normal', left: '79', right: '18', count: 9 },
+        signature: '1789',
+      },
+      {
+        first: { method: 'normal', left: '11', right: '79', count: 7 },
+        second: { method: 'normal', left: '17', right: '19', count: 9 },
+        signature: '1179',
+      },
+    ]);
+  });
+
+  test('returns no coincidences when either count is empty or invalid', () => {
+    assert.deepEqual(findMethodDigitCoincidences(analysis, {
+      firstMethod: 'normal',
+      firstCount: '',
+      secondMethod: 'inverse',
+      secondCount: '9',
+    }), []);
+    assert.deepEqual(findMethodDigitCoincidences(analysis, {
+      firstMethod: 'normal',
+      firstCount: '7',
+      secondMethod: 'inverse',
+      secondCount: 'x',
+    }), []);
   });
 });

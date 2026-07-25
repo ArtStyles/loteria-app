@@ -155,6 +155,45 @@ export function filterMatchesByCounts(matches, filters = {}) {
   });
 }
 
+export function getParletDigitSignature(parlet) {
+  const pair = Array.isArray(parlet) ? parlet : [parlet.left, parlet.right];
+  return pair
+    .map(normalizeNumber)
+    .join('')
+    .split('')
+    .sort()
+    .join('');
+}
+
+export function findMethodDigitCoincidences(analysis, filters = {}) {
+  const firstMethod = normalizeMethodFilter(filters.firstMethod);
+  const secondMethod = normalizeMethodFilter(filters.secondMethod);
+  const firstCount = parseCountFilter(filters.firstCount);
+  const secondCount = parseCountFilter(filters.secondCount);
+
+  if (!analysis || firstCount === null || secondCount === null) {
+    return [];
+  }
+
+  const firstRows = getParletRowsByMethod(analysis, firstMethod)
+    .filter((row) => row.count === firstCount);
+  const secondRowsBySignature = groupRowsBySignature(
+    getParletRowsByMethod(analysis, secondMethod)
+      .filter((row) => row.count === secondCount),
+  );
+
+  return firstRows.flatMap((firstRow) => {
+    const signature = getParletDigitSignature(firstRow);
+    const secondRows = secondRowsBySignature.get(signature) || [];
+
+    return secondRows.map((secondRow) => ({
+      first: buildMethodParlet(firstMethod, firstRow),
+      second: buildMethodParlet(secondMethod, secondRow),
+      signature,
+    }));
+  });
+}
+
 export function parseCountFilter(value) {
   const text = String(value ?? '').trim();
   if (!/^\d+$/.test(text)) {
@@ -162,6 +201,39 @@ export function parseCountFilter(value) {
   }
 
   return Number(text);
+}
+
+function normalizeMethodFilter(value) {
+  return value === 'inverse' ? 'inverse' : 'normal';
+}
+
+function getParletRowsByMethod(analysis, method) {
+  return method === 'inverse'
+    ? analysis.inverseParlets || []
+    : analysis.normalParlets || [];
+}
+
+function groupRowsBySignature(rows) {
+  const grouped = new Map();
+
+  rows.forEach((row) => {
+    const signature = getParletDigitSignature(row);
+    if (!grouped.has(signature)) {
+      grouped.set(signature, []);
+    }
+    grouped.get(signature).push(row);
+  });
+
+  return grouped;
+}
+
+function buildMethodParlet(method, row) {
+  return {
+    method,
+    left: row.left,
+    right: row.right,
+    count: row.count,
+  };
 }
 
 function drawingNumbers(drawing) {
