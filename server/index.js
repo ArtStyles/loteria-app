@@ -6,6 +6,7 @@ import {
   analyzeMethods,
   rankNumbers,
 } from '../src/lib/loteria.js';
+import { resolveStaticRequest } from './staticRoutes.js';
 import { appendDrawing, readDrawings, replaceWorkbook } from './workbook.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -14,14 +15,6 @@ const workbookPath = path.join(rootDir, 'METODOS 3.xlsx');
 const uploadsDir = path.join(rootDir, 'uploads');
 const backupsDir = path.join(rootDir, 'backups');
 const port = Number(process.env.PORT || 5174);
-
-const mimeTypes = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.jsx': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-};
 
 const server = http.createServer(async (request, response) => {
   try {
@@ -71,16 +64,19 @@ server.listen(port, '127.0.0.1', () => {
 });
 
 async function serveStatic(urlPath, response) {
-  const cleanPath = urlPath === '/' ? '/index.html' : urlPath;
-  const filePath = path.join(rootDir, cleanPath);
-  if (!filePath.startsWith(rootDir)) {
+  const staticRequest = resolveStaticRequest(rootDir, urlPath);
+
+  if (staticRequest.type === 'forbidden') {
     return sendText(response, 'No permitido', 403);
   }
 
+  if (staticRequest.type === 'not-found') {
+    return sendText(response, 'No encontrado', 404);
+  }
+
   try {
-    const content = await readFile(filePath);
-    const type = mimeTypes[path.extname(filePath)] || 'application/octet-stream';
-    response.writeHead(200, { 'Content-Type': type });
+    const content = await readFile(staticRequest.filePath);
+    response.writeHead(200, { 'Content-Type': staticRequest.contentType });
     response.end(content);
   } catch {
     sendText(response, 'No encontrado', 404);
