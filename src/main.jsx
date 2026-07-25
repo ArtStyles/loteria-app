@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
-import { filterMatchesByCounts } from './lib/loteria.js';
+import { findMethodDigitCoincidences } from './lib/loteria.js';
 import { withMinimumDelay } from './lib/uiTiming.js';
 
 function App() {
@@ -11,8 +11,14 @@ function App() {
   const [status, setStatus] = useState('Cargando datos...');
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('');
-  const [matchFilters, setMatchFilters] = useState({ normalCount: '', inverseCount: '' });
-  const [appliedMatchFilters, setAppliedMatchFilters] = useState({ normalCount: '', inverseCount: '' });
+  const defaultMatchFilters = {
+    firstMethod: 'normal',
+    firstCount: '',
+    secondMethod: 'inverse',
+    secondCount: '',
+  };
+  const [matchFilters, setMatchFilters] = useState(defaultMatchFilters);
+  const [appliedMatchFilters, setAppliedMatchFilters] = useState(defaultMatchFilters);
   const [workbookFile, setWorkbookFile] = useState(null);
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
@@ -137,7 +143,7 @@ function App() {
   }, [drawings, filter]);
 
   const filteredMatches = useMemo(() => (
-    analysis ? filterMatchesByCounts(analysis.matches, appliedMatchFilters) : []
+    analysis ? findMethodDigitCoincidences(analysis, appliedMatchFilters) : []
   ), [analysis, appliedMatchFilters]);
 
   return (
@@ -258,28 +264,52 @@ function App() {
               <h2>Coincidencias normal / inverso</h2>
               <form className="match-filter" onSubmit={searchMatches}>
                 <label>
-                  Normal salio
-                  <input
-                    inputMode="numeric"
-                    placeholder="7"
-                    value={matchFilters.normalCount}
-                    onChange={(event) => setMatchFilters({
-                      ...matchFilters,
-                      normalCount: event.target.value.replace(/\D/g, ''),
-                    })}
-                  />
+                  Campo 1
+                  <div className="match-field-controls">
+                    <select
+                      value={matchFilters.firstMethod}
+                      onChange={(event) => setMatchFilters({
+                        ...matchFilters,
+                        firstMethod: event.target.value,
+                      })}
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="inverse">Inverso</option>
+                    </select>
+                    <input
+                      inputMode="numeric"
+                      placeholder="7"
+                      value={matchFilters.firstCount}
+                      onChange={(event) => setMatchFilters({
+                        ...matchFilters,
+                        firstCount: event.target.value.replace(/\D/g, ''),
+                      })}
+                    />
+                  </div>
                 </label>
                 <label>
-                  Inverso salio
-                  <input
-                    inputMode="numeric"
-                    placeholder="9"
-                    value={matchFilters.inverseCount}
-                    onChange={(event) => setMatchFilters({
-                      ...matchFilters,
-                      inverseCount: event.target.value.replace(/\D/g, ''),
-                    })}
-                  />
+                  Campo 2
+                  <div className="match-field-controls">
+                    <select
+                      value={matchFilters.secondMethod}
+                      onChange={(event) => setMatchFilters({
+                        ...matchFilters,
+                        secondMethod: event.target.value,
+                      })}
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="inverse">Inverso</option>
+                    </select>
+                    <input
+                      inputMode="numeric"
+                      placeholder="9"
+                      value={matchFilters.secondCount}
+                      onChange={(event) => setMatchFilters({
+                        ...matchFilters,
+                        secondCount: event.target.value.replace(/\D/g, ''),
+                      })}
+                    />
+                  </div>
                 </label>
                 <button type="submit">Buscar coincidencias</button>
               </form>
@@ -288,11 +318,14 @@ function App() {
                   <p className="empty-state">No hay coincidencias para esos valores.</p>
                 )}
                 {filteredMatches.slice(0, 24).map((match) => (
-                  <div className="match-row" key={`${match.normal.join('-')}-${match.inverse.join('-')}`}>
-                    <span>{match.normal.join(' . ')}</span>
-                    <strong>{match.normalCount}</strong>
-                    <span>{match.inverse.join(' . ')}</span>
-                    <strong>{match.inverseCount}</strong>
+                  <div
+                    className="match-row"
+                    key={`${match.first.method}-${match.first.left}-${match.first.right}-${match.second.method}-${match.second.left}-${match.second.right}`}
+                  >
+                    <MatchParlet match={match.first} />
+                    <strong>{match.first.count}</strong>
+                    <MatchParlet match={match.second} />
+                    <strong>{match.second.count}</strong>
                   </div>
                 ))}
               </div>
@@ -317,6 +350,19 @@ function NumberInput({ label, value, onChange }) {
       />
     </label>
   );
+}
+
+function MatchParlet({ match }) {
+  return (
+    <span className="match-parlet">
+      <small>{formatMethodLabel(match.method)}</small>
+      {match.left} . {match.right}
+    </span>
+  );
+}
+
+function formatMethodLabel(method) {
+  return method === 'inverse' ? 'Inverso' : 'Normal';
 }
 
 async function readJsonResponse(response) {
