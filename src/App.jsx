@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, Route, Routes } from 'react-router';
-import { findMethodDigitCoincidences } from './lib/loteria.js';
+import {
+  findMethodDigitCoincidences,
+  findRangeNumberCoincidences,
+  parseCountRanges,
+} from './lib/loteria.js';
 import { withMinimumDelay } from './lib/uiTiming.js';
 import { appRoutes, navItems } from './routes.js';
 import {
@@ -20,6 +24,11 @@ const defaultMatchFilters = {
   secondCount: '',
 };
 
+const defaultRangeFilters = {
+  normalRanges: '',
+  inverseRanges: '',
+};
+
 export default function App() {
   const [drawings, setDrawings] = useState([]);
   const [analysis, setAnalysis] = useState(null);
@@ -29,6 +38,8 @@ export default function App() {
   const [filter, setFilter] = useState('');
   const [matchFilters, setMatchFilters] = useState(defaultMatchFilters);
   const [appliedMatchFilters, setAppliedMatchFilters] = useState(defaultMatchFilters);
+  const [rangeFilters, setRangeFilters] = useState(defaultRangeFilters);
+  const [appliedRangeFilters, setAppliedRangeFilters] = useState(defaultRangeFilters);
   const [workbookFile, setWorkbookFile] = useState(null);
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
@@ -106,6 +117,11 @@ export default function App() {
     setAppliedMatchFilters(matchFilters);
   }
 
+  function searchRangeMatches(event) {
+    event.preventDefault();
+    setAppliedRangeFilters(rangeFilters);
+  }
+
   async function uploadWorkbook(event) {
     event.preventDefault();
     if (!workbookFile) {
@@ -157,6 +173,15 @@ export default function App() {
   const filteredMatches = useMemo(() => (
     analysis ? findMethodDigitCoincidences(analysis, appliedMatchFilters) : []
   ), [analysis, appliedMatchFilters]);
+
+  const rangeMatches = useMemo(() => (
+    analysis ? findRangeNumberCoincidences(analysis, appliedRangeFilters) : []
+  ), [analysis, appliedRangeFilters]);
+
+  const rangeSearchReady = useMemo(() => (
+    parseCountRanges(appliedRangeFilters.normalRanges).length > 0
+    && parseCountRanges(appliedRangeFilters.inverseRanges).length > 0
+  ), [appliedRangeFilters]);
 
   return (
     <main className="app-shell">
@@ -235,7 +260,12 @@ export default function App() {
               filteredMatches={filteredMatches}
               matchFilters={matchFilters}
               onSearchMatches={searchMatches}
+              onSearchRangeMatches={searchRangeMatches}
+              rangeFilters={rangeFilters}
+              rangeMatches={rangeMatches}
+              rangeSearchReady={rangeSearchReady}
               setMatchFilters={setMatchFilters}
+              setRangeFilters={setRangeFilters}
             />
           )}
         />
