@@ -222,6 +222,13 @@ describe('range number coincidences', () => {
     assert.deepEqual(parseCountRanges('abc, -1'), []);
   });
 
+  test('ignores counts outside the safe integer range without losing valid counts', () => {
+    assert.deepEqual(
+      parseCountRanges('9007199254740991, 9007199254740992, 999999999999999999999999, 7'),
+      [9007199254740991, 7],
+    );
+  });
+
   test('finds shared numbers and keeps normal and inverse occurrences separate', () => {
     assert.deepEqual(findRangeNumberCoincidences(analysis, {
       normalRanges: '7, 6, 8, 9',

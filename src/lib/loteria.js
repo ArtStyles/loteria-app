@@ -207,7 +207,8 @@ export function parseCountRanges(value) {
   const counts = String(value ?? '')
     .split(/[,\.\s]+/)
     .filter((part) => /^\d+$/.test(part))
-    .map(Number);
+    .map(Number)
+    .filter(Number.isSafeInteger);
 
   return unique(counts);
 }
