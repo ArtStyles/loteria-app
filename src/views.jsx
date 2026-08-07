@@ -157,79 +157,131 @@ export function CoincidencesView({
   filteredMatches,
   matchFilters,
   onSearchMatches,
+  onSearchRangeMatches,
+  rangeFilters,
+  rangeMatches,
+  rangeSearchReady,
   setMatchFilters,
+  setRangeFilters,
 }) {
   return (
-    <section className="panel route-panel">
-      <h2>Coincidencias normal / inverso</h2>
-      <form className="match-filter" onSubmit={onSearchMatches}>
-        <label>
-          Campo 1
-          <div className="match-field-controls">
-            <select
-              value={matchFilters.firstMethod}
-              onChange={(event) => setMatchFilters({
-                ...matchFilters,
-                firstMethod: event.target.value,
-              })}
-            >
-              <option value="normal">Normal</option>
-              <option value="inverse">Inverso</option>
-            </select>
-            <input
-              inputMode="numeric"
-              placeholder="7"
-              value={matchFilters.firstCount}
-              onChange={(event) => setMatchFilters({
-                ...matchFilters,
-                firstCount: event.target.value.replace(/\D/g, ''),
-              })}
-            />
-          </div>
-        </label>
-        <label>
-          Campo 2
-          <div className="match-field-controls">
-            <select
-              value={matchFilters.secondMethod}
-              onChange={(event) => setMatchFilters({
-                ...matchFilters,
-                secondMethod: event.target.value,
-              })}
-            >
-              <option value="normal">Normal</option>
-              <option value="inverse">Inverso</option>
-            </select>
-            <input
-              inputMode="numeric"
-              placeholder="9"
-              value={matchFilters.secondCount}
-              onChange={(event) => setMatchFilters({
-                ...matchFilters,
-                secondCount: event.target.value.replace(/\D/g, ''),
-              })}
-            />
-          </div>
-        </label>
-        <button type="submit">Buscar coincidencias</button>
-      </form>
+    <section className="route-stack">
+      <section className="panel route-panel">
+        <h2>Coincidencias normal / inverso</h2>
+        <form className="match-filter" onSubmit={onSearchMatches}>
+          <label>
+            Campo 1
+            <div className="match-field-controls">
+              <select
+                value={matchFilters.firstMethod}
+                onChange={(event) => setMatchFilters({
+                  ...matchFilters,
+                  firstMethod: event.target.value,
+                })}
+              >
+                <option value="normal">Normal</option>
+                <option value="inverse">Inverso</option>
+              </select>
+              <input
+                inputMode="numeric"
+                placeholder="7"
+                value={matchFilters.firstCount}
+                onChange={(event) => setMatchFilters({
+                  ...matchFilters,
+                  firstCount: event.target.value.replace(/\D/g, ''),
+                })}
+              />
+            </div>
+          </label>
+          <label>
+            Campo 2
+            <div className="match-field-controls">
+              <select
+                value={matchFilters.secondMethod}
+                onChange={(event) => setMatchFilters({
+                  ...matchFilters,
+                  secondMethod: event.target.value,
+                })}
+              >
+                <option value="normal">Normal</option>
+                <option value="inverse">Inverso</option>
+              </select>
+              <input
+                inputMode="numeric"
+                placeholder="9"
+                value={matchFilters.secondCount}
+                onChange={(event) => setMatchFilters({
+                  ...matchFilters,
+                  secondCount: event.target.value.replace(/\D/g, ''),
+                })}
+              />
+            </div>
+          </label>
+          <button type="submit">Buscar coincidencias</button>
+        </form>
 
-      <div className="match-list">
-        {filteredMatches.length === 0 && (
-          <p className="empty-state">No hay coincidencias para esos valores.</p>
-        )}
-        {filteredMatches.slice(0, 24).map((match) => (
-          <div
-            className="match-row"
-            key={`${match.first.method}-${match.first.left}-${match.first.right}-${match.second.method}-${match.second.left}-${match.second.right}`}
-          >
-            <MatchParlet match={match.first} />
-            <strong>{match.first.count}</strong>
-            <MatchParlet match={match.second} />
-            <strong>{match.second.count}</strong>
-          </div>
-        ))}
-      </div>
+        <div className="match-list">
+          {filteredMatches.length === 0 && (
+            <p className="empty-state">No hay coincidencias para esos valores.</p>
+          )}
+          {filteredMatches.slice(0, 24).map((match) => (
+            <div
+              className="match-row"
+              key={`${match.first.method}-${match.first.left}-${match.first.right}-${match.second.method}-${match.second.left}-${match.second.right}`}
+            >
+              <MatchParlet match={match.first} />
+              <strong>{match.first.count}</strong>
+              <MatchParlet match={match.second} />
+              <strong>{match.second.count}</strong>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel route-panel">
+        <h2>Coincidencias por rangos</h2>
+        <form className="range-filter" onSubmit={onSearchRangeMatches}>
+          <label>
+            Rangos Normal
+            <input
+              placeholder="7, 6, 8, 9, 10, 11"
+              value={rangeFilters.normalRanges}
+              onChange={(event) => setRangeFilters({
+                ...rangeFilters,
+                normalRanges: event.target.value,
+              })}
+            />
+          </label>
+          <label>
+            Rangos Inverso
+            <input
+              placeholder="5, 4, 12"
+              value={rangeFilters.inverseRanges}
+              onChange={(event) => setRangeFilters({
+                ...rangeFilters,
+                inverseRanges: event.target.value,
+              })}
+            />
+          </label>
+          <button type="submit">Buscar numeros repetidos</button>
+        </form>
+
+        <div className="range-match-list">
+          {!rangeSearchReady && (
+            <p className="empty-state">Completa ambos rangos para buscar.</p>
+          )}
+          {rangeSearchReady && rangeMatches.length === 0 && (
+            <p className="empty-state">No hay numeros repetidos entre esos rangos.</p>
+          )}
+          {rangeMatches.map((match) => (
+            <div className="range-match-row" key={match.number}>
+              <strong className="range-match-number">{match.number}</strong>
+              <span>Normal: <strong>{match.normalOccurrences}</strong> veces</span>
+              <span>Inverso: <strong>{match.inverseOccurrences}</strong> veces</span>
+            </div>
+          ))}
+        </div>
+      </section>
     </section>
   );
 }

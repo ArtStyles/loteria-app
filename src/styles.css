@@ -346,6 +346,14 @@ th {
   margin-bottom: 12px;
 }
 
+.range-filter {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr auto;
+  margin-bottom: 12px;
+}
+
 .match-field-controls {
   display: grid;
   gap: 8px;
@@ -353,6 +361,11 @@ th {
 }
 
 .match-list {
+  display: grid;
+  gap: 8px;
+}
+
+.range-match-list {
   display: grid;
   gap: 8px;
 }
@@ -366,6 +379,22 @@ th {
   gap: 10px;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
   padding: 9px 10px;
+}
+
+.range-match-row {
+  align-items: center;
+  background: #f8fafb;
+  border: 1px solid #e3eaee;
+  border-radius: 6px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 72px minmax(0, 1fr) minmax(0, 1fr);
+  padding: 10px;
+}
+
+.range-match-number {
+  color: #0f766e;
+  font-size: 20px;
 }
 
 .match-parlet {
@@ -484,11 +513,20 @@ th {
   .quick-action-grid,
   .number-grid,
   .match-filter,
-  .match-field-controls {
+  .match-field-controls,
+  .range-filter {
     grid-template-columns: 1fr;
   }
 
   .match-row {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .range-match-row {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .range-match-row span:last-child {
+    grid-column: 2;
   }
 }
