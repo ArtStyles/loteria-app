@@ -6,11 +6,13 @@ import {
   buildParlets,
   countParlet,
   filterMatchesByCounts,
+  findRangeNumberCoincidences,
   findMethodDigitCoincidences,
   getDrawDigits,
   getParletDigitSignature,
   normalizeNumber,
   parseCountFilter,
+  parseCountRanges,
   rankNumbers,
 } from './loteria.js';
 
@@ -192,6 +194,58 @@ describe('configurable method digit coincidences', () => {
       firstCount: '7',
       secondMethod: 'inverse',
       secondCount: 'x',
+    }), []);
+  });
+});
+
+describe('range number coincidences', () => {
+  const analysis = {
+    normalParlets: [
+      { left: '78', right: '15', count: 7 },
+      { left: '78', right: '10', count: 6 },
+      { left: '21', right: '30', count: 9 },
+      { left: '10', right: '21', count: 8 },
+      { left: '99', right: '15', count: 2 },
+    ],
+    inverseParlets: [
+      { left: '78', right: '40', count: 5 },
+      { left: '15', right: '10', count: 4 },
+      { left: '21', right: '78', count: 12 },
+      { left: '10', right: '55', count: 4 },
+      { left: '21', right: '66', count: 3 },
+    ],
+  };
+
+  test('parses unique non-negative counts separated by commas, dots, or spaces', () => {
+    assert.deepEqual(parseCountRanges('7, 6.8 9,,10...11 7'), [7, 6, 8, 9, 10, 11]);
+    assert.deepEqual(parseCountRanges('7, abc, -1, 9'), [7, 9]);
+    assert.deepEqual(parseCountRanges('abc, -1'), []);
+  });
+
+  test('finds shared numbers and keeps normal and inverse occurrences separate', () => {
+    assert.deepEqual(findRangeNumberCoincidences(analysis, {
+      normalRanges: '7, 6, 8, 9',
+      inverseRanges: '5.4.12',
+    }), [
+      { number: '10', normalOccurrences: 2, inverseOccurrences: 2 },
+      { number: '78', normalOccurrences: 2, inverseOccurrences: 2 },
+      { number: '21', normalOccurrences: 2, inverseOccurrences: 1 },
+      { number: '15', normalOccurrences: 1, inverseOccurrences: 1 },
+    ]);
+  });
+
+  test('requires valid ranges on both sides and returns no non-shared numbers', () => {
+    assert.deepEqual(findRangeNumberCoincidences(analysis, {
+      normalRanges: '',
+      inverseRanges: '4',
+    }), []);
+    assert.deepEqual(findRangeNumberCoincidences(analysis, {
+      normalRanges: '2',
+      inverseRanges: '3',
+    }), []);
+    assert.deepEqual(findRangeNumberCoincidences(null, {
+      normalRanges: '7',
+      inverseRanges: '4',
     }), []);
   });
 });

@@ -203,6 +203,56 @@ export function parseCountFilter(value) {
   return Number(text);
 }
 
+export function parseCountRanges(value) {
+  const counts = String(value ?? '')
+    .split(/[,\.\s]+/)
+    .filter((part) => /^\d+$/.test(part))
+    .map(Number);
+
+  return unique(counts);
+}
+
+export function findRangeNumberCoincidences(analysis, filters = {}) {
+  const normalRanges = new Set(parseCountRanges(filters.normalRanges));
+  const inverseRanges = new Set(parseCountRanges(filters.inverseRanges));
+
+  if (!analysis || normalRanges.size === 0 || inverseRanges.size === 0) {
+    return [];
+  }
+
+  const normalOccurrences = countNumbersInParlets(
+    (analysis.normalParlets || []).filter((row) => normalRanges.has(row.count)),
+  );
+  const inverseOccurrences = countNumbersInParlets(
+    (analysis.inverseParlets || []).filter((row) => inverseRanges.has(row.count)),
+  );
+
+  return [...normalOccurrences.entries()]
+    .filter(([number]) => inverseOccurrences.has(number))
+    .map(([number, count]) => ({
+      number,
+      normalOccurrences: count,
+      inverseOccurrences: inverseOccurrences.get(number),
+    }))
+    .sort((a, b) => (
+      (b.normalOccurrences + b.inverseOccurrences)
+      - (a.normalOccurrences + a.inverseOccurrences)
+      || a.number.localeCompare(b.number)
+    ));
+}
+
+function countNumbersInParlets(rows) {
+  const occurrences = new Map();
+
+  rows.forEach(({ left, right }) => {
+    [left, right].map(normalizeNumber).forEach((number) => {
+      occurrences.set(number, (occurrences.get(number) || 0) + 1);
+    });
+  });
+
+  return occurrences;
+}
+
 function normalizeMethodFilter(value) {
   return value === 'inverse' ? 'inverse' : 'normal';
 }
