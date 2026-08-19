@@ -3,7 +3,7 @@ import { NavLink, Route, Routes } from 'react-router';
 import {
   findMethodDigitCoincidences,
   findRangeNumberCoincidences,
-  parseCountRanges,
+  hasEnoughRangeGroups,
 } from './lib/loteria.js';
 import { withMinimumDelay } from './lib/uiTiming.js';
 import { appRoutes, navItems } from './routes.js';
@@ -178,10 +178,10 @@ export default function App() {
     analysis ? findRangeNumberCoincidences(analysis, appliedRangeFilters) : []
   ), [analysis, appliedRangeFilters]);
 
-  const rangeSearchReady = useMemo(() => (
-    parseCountRanges(appliedRangeFilters.normalRanges).length > 0
-    && parseCountRanges(appliedRangeFilters.inverseRanges).length > 0
-  ), [appliedRangeFilters]);
+  const rangeSearchReady = useMemo(
+    () => hasEnoughRangeGroups(appliedRangeFilters),
+    [appliedRangeFilters],
+  );
 
   return (
     <main className="app-shell">

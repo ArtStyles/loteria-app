@@ -268,7 +268,7 @@ export function CoincidencesView({
 
         <div className="range-match-list">
           {!rangeSearchReady && (
-            <p className="empty-state">Completa ambos rangos para buscar.</p>
+            <p className="empty-state">Completa al menos dos rangos para buscar.</p>
           )}
           {rangeSearchReady && rangeMatches.length === 0 && (
             <p className="empty-state">No hay numeros repetidos entre esos rangos.</p>
@@ -278,12 +278,20 @@ export function CoincidencesView({
               <strong className="range-match-number">{match.number}</strong>
               <span>Normal: <strong>{match.normalOccurrences}</strong> veces</span>
               <span>Inverso: <strong>{match.inverseOccurrences}</strong> veces</span>
+              <span className="range-match-ranges">
+                Rangos: {match.matchingRanges.map(formatMatchingRange).join(', ')}
+              </span>
             </div>
           ))}
         </div>
       </section>
     </section>
   );
+}
+
+function formatMatchingRange(range) {
+  const method = range.method === 'inverse' ? 'Inverso' : 'Normal';
+  return `${method} ${range.count}`;
 }
 
 export function NotFoundView() {

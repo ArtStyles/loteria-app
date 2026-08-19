@@ -10,6 +10,7 @@ import {
   findMethodDigitCoincidences,
   getDrawDigits,
   getParletDigitSignature,
+  hasEnoughRangeGroups,
   normalizeNumber,
   parseCountFilter,
   parseCountRanges,
@@ -229,27 +230,155 @@ describe('range number coincidences', () => {
     );
   });
 
-  test('finds shared numbers and keeps normal and inverse occurrences separate', () => {
+  test('allows any two distinct method-range groups, including two from the same method', () => {
+    assert.equal(hasEnoughRangeGroups({
+      normalRanges: '7, 6',
+      inverseRanges: '',
+    }), true);
+    assert.equal(hasEnoughRangeGroups({
+      normalRanges: '7, 7',
+      inverseRanges: '',
+    }), false);
+  });
+
+  test('finds numbers repeated across selected ranges and identifies every matching group', () => {
     assert.deepEqual(findRangeNumberCoincidences(analysis, {
       normalRanges: '7, 6, 8, 9',
       inverseRanges: '5.4.12',
     }), [
-      { number: '10', normalOccurrences: 2, inverseOccurrences: 2 },
-      { number: '78', normalOccurrences: 2, inverseOccurrences: 2 },
-      { number: '21', normalOccurrences: 2, inverseOccurrences: 1 },
-      { number: '15', normalOccurrences: 1, inverseOccurrences: 1 },
+      {
+        number: '10',
+        normalOccurrences: 2,
+        inverseOccurrences: 2,
+        matchingRanges: [
+          { method: 'normal', count: 6 },
+          { method: 'normal', count: 8 },
+          { method: 'inverse', count: 4 },
+        ],
+      },
+      {
+        number: '78',
+        normalOccurrences: 2,
+        inverseOccurrences: 2,
+        matchingRanges: [
+          { method: 'normal', count: 7 },
+          { method: 'normal', count: 6 },
+          { method: 'inverse', count: 5 },
+          { method: 'inverse', count: 12 },
+        ],
+      },
+      {
+        number: '21',
+        normalOccurrences: 2,
+        inverseOccurrences: 1,
+        matchingRanges: [
+          { method: 'normal', count: 8 },
+          { method: 'normal', count: 9 },
+          { method: 'inverse', count: 12 },
+        ],
+      },
+      {
+        number: '15',
+        normalOccurrences: 1,
+        inverseOccurrences: 1,
+        matchingRanges: [
+          { method: 'normal', count: 7 },
+          { method: 'inverse', count: 4 },
+        ],
+      },
     ]);
   });
 
-  test('requires valid ranges on both sides and returns no non-shared numbers', () => {
+  test('finds an exact number repeated in at least two distinct ranges of the same method', () => {
+    assert.deepEqual(findRangeNumberCoincidences(analysis, {
+      normalRanges: '7, 6',
+      inverseRanges: '',
+    }), [
+      {
+        number: '78',
+        normalOccurrences: 2,
+        inverseOccurrences: 0,
+        matchingRanges: [
+          { method: 'normal', count: 7 },
+          { method: 'normal', count: 6 },
+        ],
+      },
+    ]);
+  });
+
+  test('finds an exact number repeated in two inverse ranges without normal ranges', () => {
+    assert.deepEqual(findRangeNumberCoincidences(analysis, {
+      normalRanges: '',
+      inverseRanges: '5, 12',
+    }), [
+      {
+        number: '78',
+        normalOccurrences: 0,
+        inverseOccurrences: 2,
+        matchingRanges: [
+          { method: 'inverse', count: 5 },
+          { method: 'inverse', count: 12 },
+        ],
+      },
+    ]);
+  });
+
+  test('keeps reversed values such as 12 and 21 as different numbers', () => {
+    const exactAnalysis = {
+      normalParlets: [
+        { left: '12', right: '34', count: 7 },
+        { left: '12', right: '56', count: 6 },
+      ],
+      inverseParlets: [
+        { left: '21', right: '78', count: 5 },
+        { left: '21', right: '90', count: 4 },
+      ],
+    };
+
+    assert.deepEqual(findRangeNumberCoincidences(exactAnalysis, {
+      normalRanges: '7, 6',
+      inverseRanges: '5, 4',
+    }), [
+      {
+        number: '12',
+        normalOccurrences: 2,
+        inverseOccurrences: 0,
+        matchingRanges: [
+          { method: 'normal', count: 7 },
+          { method: 'normal', count: 6 },
+        ],
+      },
+      {
+        number: '21',
+        normalOccurrences: 0,
+        inverseOccurrences: 2,
+        matchingRanges: [
+          { method: 'inverse', count: 5 },
+          { method: 'inverse', count: 4 },
+        ],
+      },
+    ]);
+  });
+
+  test('requires two distinct ranges and does not count repeated appearances inside one range twice', () => {
     assert.deepEqual(findRangeNumberCoincidences(analysis, {
       normalRanges: '',
       inverseRanges: '4',
     }), []);
     assert.deepEqual(findRangeNumberCoincidences(analysis, {
       normalRanges: '2',
-      inverseRanges: '3',
-    }), []);
+      inverseRanges: '4',
+    }), [
+      {
+        number: '15',
+        normalOccurrences: 1,
+        inverseOccurrences: 1,
+        matchingRanges: [
+          { method: 'normal', count: 2 },
+          { method: 'inverse', count: 4 },
+        ],
+      },
+    ]);
     assert.deepEqual(findRangeNumberCoincidences(null, {
       normalRanges: '7',
       inverseRanges: '4',

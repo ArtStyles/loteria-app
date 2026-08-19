@@ -213,28 +213,60 @@ export function parseCountRanges(value) {
   return unique(counts);
 }
 
-export function findRangeNumberCoincidences(analysis, filters = {}) {
-  const normalRanges = new Set(parseCountRanges(filters.normalRanges));
-  const inverseRanges = new Set(parseCountRanges(filters.inverseRanges));
+export function hasEnoughRangeGroups(filters = {}) {
+  return parseCountRanges(filters.normalRanges).length
+    + parseCountRanges(filters.inverseRanges).length >= 2;
+}
 
-  if (!analysis || normalRanges.size === 0 || inverseRanges.size === 0) {
+export function findRangeNumberCoincidences(analysis, filters = {}) {
+  const normalRanges = parseCountRanges(filters.normalRanges);
+  const inverseRanges = parseCountRanges(filters.inverseRanges);
+
+  if (!analysis || !hasEnoughRangeGroups(filters)) {
     return [];
   }
 
-  const normalOccurrences = countNumbersInParlets(
-    (analysis.normalParlets || []).filter((row) => normalRanges.has(row.count)),
-  );
-  const inverseOccurrences = countNumbersInParlets(
-    (analysis.inverseParlets || []).filter((row) => inverseRanges.has(row.count)),
-  );
+  const rangeGroups = [
+    ...normalRanges.map((count) => ({
+      method: 'normal',
+      count,
+      occurrences: countNumbersInParlets(
+        (analysis.normalParlets || []).filter((row) => row.count === count),
+      ),
+    })),
+    ...inverseRanges.map((count) => ({
+      method: 'inverse',
+      count,
+      occurrences: countNumbersInParlets(
+        (analysis.inverseParlets || []).filter((row) => row.count === count),
+      ),
+    })),
+  ];
 
-  return [...normalOccurrences.entries()]
-    .filter(([number]) => inverseOccurrences.has(number))
-    .map(([number, count]) => ({
-      number,
-      normalOccurrences: count,
-      inverseOccurrences: inverseOccurrences.get(number),
-    }))
+  const matchesByNumber = new Map();
+
+  rangeGroups.forEach(({ method, count, occurrences }) => {
+    occurrences.forEach((occurrenceCount, number) => {
+      const match = matchesByNumber.get(number) || {
+        number,
+        normalOccurrences: 0,
+        inverseOccurrences: 0,
+        matchingRanges: [],
+      };
+
+      if (method === 'normal') {
+        match.normalOccurrences += occurrenceCount;
+      } else {
+        match.inverseOccurrences += occurrenceCount;
+      }
+
+      match.matchingRanges.push({ method, count });
+      matchesByNumber.set(number, match);
+    });
+  });
+
+  return [...matchesByNumber.values()]
+    .filter((match) => match.matchingRanges.length >= 2)
     .sort((a, b) => (
       (b.normalOccurrences + b.inverseOccurrences)
       - (a.normalOccurrences + a.inverseOccurrences)

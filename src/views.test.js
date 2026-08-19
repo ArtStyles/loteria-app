@@ -28,7 +28,7 @@ describe('range coincidence UI states', () => {
 
     assert.match(html, /value="7, 6"/);
     assert.match(html, /value="5, 4"/);
-    assert.match(html, /Completa ambos rangos para buscar\./);
+    assert.match(html, /Completa al menos dos rangos para buscar\./);
     assert.doesNotMatch(html, /No hay numeros repetidos entre esos rangos\./);
   });
 
@@ -39,22 +39,31 @@ describe('range coincidence UI states', () => {
     });
 
     assert.match(html, /No hay numeros repetidos entre esos rangos\./);
-    assert.doesNotMatch(html, /Completa ambos rangos para buscar\./);
+    assert.doesNotMatch(html, /Completa al menos dos rangos para buscar\./);
   });
 
   test('shows applied occurrence counts independently from later field edits', () => {
     const html = renderView({
-      rangeFilters: { normalRanges: '9', inverseRanges: '3' },
-      rangeMatches: [{ number: '78', normalOccurrences: 3, inverseOccurrences: 2 }],
+      rangeFilters: { normalRanges: '11', inverseRanges: '12' },
+      rangeMatches: [{
+        number: '78',
+        normalOccurrences: 3,
+        inverseOccurrences: 2,
+        matchingRanges: [
+          { method: 'normal', count: 9 },
+          { method: 'inverse', count: 3 },
+        ],
+      }],
       rangeSearchReady: true,
     });
 
-    assert.match(html, /value="9"/);
-    assert.match(html, /value="3"/);
+    assert.match(html, /value="11"/);
+    assert.match(html, /value="12"/);
     assert.match(html, /range-match-number">78</);
     assert.match(html, /Normal: <strong>3<\/strong> veces/);
     assert.match(html, /Inverso: <strong>2<\/strong> veces/);
-    assert.doesNotMatch(html, /Completa ambos rangos para buscar\./);
+    assert.match(html, /Rangos: Normal 9, Inverso 3/);
+    assert.doesNotMatch(html, /Completa al menos dos rangos para buscar\./);
     assert.doesNotMatch(html, /No hay numeros repetidos entre esos rangos\./);
   });
 });

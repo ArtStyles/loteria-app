@@ -397,6 +397,12 @@ th {
   font-size: 20px;
 }
 
+.range-match-ranges {
+  color: #52636d;
+  font-size: 14px;
+  grid-column: 2 / -1;
+}
+
 .match-parlet {
   display: grid;
   gap: 2px;
@@ -526,7 +532,7 @@ th {
     grid-template-columns: 64px minmax(0, 1fr);
   }
 
-  .range-match-row span:last-child {
+  .range-match-row > span {
     grid-column: 2;
   }
 }
